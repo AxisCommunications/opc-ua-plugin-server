@@ -1,0 +1,13 @@
+{
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true
+  },
+  "markdown.extension.list.indentationSize": "inherit",
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow": [
+      "/.github/workflows/*"
+    ]
+  }
+}

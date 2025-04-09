@@ -1,0 +1,18 @@
+# Unordered list indentation
+# Reason: Due to the EditorConfig setting of using 4 spaces as indentation, we
+# also need to align the linter to respect 4 spaces.
+MD007:
+  indent: 4
+
+# Line length
+# Reason: Most editors wrap long lines, and long lines doesn't affect rendered
+# Markdown.
+MD013: false
+
+# Blank line inside blockquote
+# Reason: Multiple individual blockquotes can be stacked on top of each other.
+MD028: false
+
+# First line in a file should be a top-level heading
+# Reason: We often use a copyright header.
+MD041: false
