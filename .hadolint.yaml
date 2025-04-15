@@ -1,0 +1,8 @@
+---
+ignored:
+  # Pin versions in 'apt-get install'.
+  - DL3008
+  # Use WORKDIR to switch to a directory.
+  - DL3003
+  # DEBIAN_FRONTEND appears unused. (actually used by 'apt install')
+  - SC2034
