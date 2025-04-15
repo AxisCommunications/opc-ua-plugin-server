@@ -1,2 +1,7 @@
 *.log
 .DS_Store
+*.eap
+*_LICENSE.txt
+cscope.out
+tags
+*.d
