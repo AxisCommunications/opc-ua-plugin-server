@@ -109,33 +109,60 @@ RUN . /opt/axis/acapsdk/environment-setup* && make && make install
 ARG BUILD_DIR
 ARG ARCH=aarch64
 # UID and user/login name
-ARG HOST_UID
-ARG HOST_LOGIN
+ARG UID=5001
+ARG USR_NAME=acapdev
 # primary GID and group name
-ARG HOST_GID
-ARG HOST_GROUP
+ARG GID=5001
+ARG GRP_NAME=acapdev
 
-# Create a user to match the one on the host. We'll use this user when running
-# the container to avoid creating files owned by 'root'.
+# Create a user to match the UID/GID of the current user on the host. We'll use
+# this user when running the container to avoid creating files owned by 'root'.
 RUN <<EOF
-groupadd -g ${HOST_GID} ${HOST_GROUP} || {
+echo "Checking if GID: ${GID} exists..."
+if getent group ${GID} >/dev/null; then
+  echo "Group with GID: ${GID} already exists."
+  GROUP=$(getent group ${GID} | cut -d: -f1)
+  [ ! -z "${GROUP}" ] || {
+    echo "Failed to get group name for GID: ${GID}!"
+    exit 1
+  }
+else
+  echo "Group with GID: ${GID} not found, adding it..."
+  groupadd -g ${GID} ${GRP_NAME} || {
     echo "groupadd: failed!"
     exit 1
   }
-useradd -l -u ${HOST_UID} -g ${HOST_GID} -s /bin/bash -m ${HOST_LOGIN} || {
-    echo "useradd: failed!"
+  GROUP=${GRP_NAME}
+fi
+
+echo "Checking if UID: ${UID} exists..."
+if getent passwd ${UID} >/dev/null; then
+  echo "User with UID: ${UID} already exists."
+  USR_NAME=$(getent passwd ${UID} | cut -d: -f1)
+  [ ! -z "${USR_NAME}" ] || {
+    echo "Failed to get user name for UID: ${UID}!"
     exit 1
   }
+else
+  echo "User with UID: ${UID} not found, adding it..."
+  useradd -l -u ${UID} -g ${GROUP} -s /bin/bash -m ${USR_NAME} || {
+      echo "useradd: failed!"
+      exit 1
+    }
+fi
+
 # Passwordless user
-passwd -d ${HOST_LOGIN} || {
+passwd -d ${USR_NAME} || {
     echo "passwd: failed!"
     exit 1
   }
-EOF
 
 # Let the new user do 'sudo'
-RUN cat <<EOF >/etc/sudoers.d/${HOST_LOGIN}
-${HOST_LOGIN} ALL=(ALL) NOPASSWD:ALL
+cat <<EOFMARKER >/etc/sudoers.d/${USR_NAME}
+${USR_NAME} ALL=(ALL) NOPASSWD:ALL
+EOFMARKER
+
 EOF
 
 WORKDIR ${BUILD_DIR}
+USER ${UID}:${GID}
