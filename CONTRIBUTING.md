@@ -145,6 +145,7 @@ docker run --rm \
     -e RUN_LOCAL=true \
     -e LINTER_RULES_PATH=/ \
     -e MARKDOWN_CONFIG_FILE=.markdownlint.yml \
+    -e VALIDATE_MARKDOWN_PRETTIER=false \
     github/super-linter:slim-v4
 ```
 

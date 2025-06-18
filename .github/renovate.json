@@ -1,14 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
+  "extends": ["config:recommended"],
   "labels": ["dependencies"],
   "rebaseWhen": "behind-base-branch",
   "vulnerabilityAlerts": {
     "labels": ["security"]
   },
-  "stabilityDays": 7,
+  "minimumReleaseAge": "7 days",
   "prCreation": "not-pending",
   "dependencyDashboard": true
 }

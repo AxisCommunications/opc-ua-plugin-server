@@ -27,7 +27,7 @@ The repository has been set up to integrate with [Visual Studio Code](https://co
 
 #### General extensions
 
-- [EditorConfig for VS Code](https://marketplace.visualstudio.com/items?itemName=editorconfig.editorconfig) - Extension automatically aligns the content of a file with the style defined in `.editorconfig` when file is saved.
+- [EditorConfig for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=editorconfig.editorconfig) - Extension automatically aligns the content of a file with the style defined in `.editorconfig` when file is saved.
 - [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker) - Extension visually spell checks your code or documentation as you type. The language `en-US` is used by default.
 
 #### Markdown extensions

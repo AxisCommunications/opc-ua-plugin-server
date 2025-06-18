@@ -6,8 +6,6 @@
   },
   "markdown.extension.list.indentationSize": "inherit",
   "yaml.schemas": {
-    "https://json.schemastore.org/github-workflow": [
-      "/.github/workflows/*"
-    ]
+    "https://json.schemastore.org/github-workflow": ["/.github/workflows/*"]
   }
 }
