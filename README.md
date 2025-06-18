@@ -1,11 +1,13 @@
 *©2025 Axis Communications AB. AXIS COMMUNICATIONS, AXIS, ARTPEC and VAPIX are registered trademarks of Axis AB in various jurisdictions. All other trademarks are the property of their respective owners.*
 
 <!-- omit in toc -->
-# OPC-UA Plugin Server ACAP
+# OPC-UA Plugin Server ACAP application
 
-This repository contains the source code for building an OPC-UA Server ACAP,
-along with a guide on developing and building custom modules/plugins.
-Two example plugins are provided.
+This repository contains the source code for building an OPC-UA Server ACAP application,
+along with a guide on developing and building custom modules/plugins. You can
+create your own plugins to address specific use cases. Two example plugins
+are provided and described below. Additional plugins will be published in
+the future designed to enhance production value.
 
 The OPC-UA Server is based on the [**open62541**](https://www.open62541.org/)
 library. For an introduction to OPC-UA, see
@@ -14,7 +16,8 @@ library. For an introduction to OPC-UA, see
 <!-- omit in toc -->
 ## Table of contents
 
-- [Build the ACAP](#build-the-acap)
+- [Products and firmware versions](#products-and-firmware-version)
+- [Build the application](#build-the-application)
     - [Make and Docker](#make-and-docker)
     - [Docker](#docker)
     - [Docker (development containers)](#docker-development-containers)
@@ -22,27 +25,42 @@ library. For an introduction to OPC-UA, see
     - [Install](#install)
     - [Setup](#setup)
     - [Usage](#usage)
-- [Products and firmware versions](#products-and-firmware-version)
 - [Create your own plugin](#create-your-own-plugin)
 - [Limitations](#limitations)
     - [Security](#security)
     - [Certification](#certification)
 - [License](#license)
 
-## Build the ACAP
+## Products and firmware version
 
-### Make and Docker
+The application has been tested on the following products (with firmware version):
+
+- AXIS Q1645 - 11.7.61
+- AXIS F9111 - 12.2.58
+- AXIS P3265-LV - 12.0.4
+- AXIS Q1961-TE - 12.0.10
+
+>[!NOTE]
+> The application may work on other Axis devices and firmware versions beyond those
+> listed, but compatibility is not guaranteed. Users are advised to test the
+> application on their specific device and firmware version before deploying it in
+> production. For more information on compatibility, please visit the
+> [**Axis Developer Documentation**](https://developer.axis.com/acap/axis-devices-and-compatibility/).
+
+## Build the application
+
+### Make and docker
 
 ```sh
 make dockerbuild
 ```
 
-This will build the ACAP (server and all plugins) for both supported
+This will build the application (server and all plugins) for both supported
 architectures: armv7hf and aarch64.
 
 ### Docker
 
-Alternatively, you can build the ACAP for each architecture using the following
+Alternatively, you can build the application for each architecture using the following
 commands without invoking `make`:
 
 ```sh
@@ -53,9 +71,11 @@ docker build --build-arg ARCH=armv7hf --output type=local,dest=. .
 docker build --build-arg ARCH=aarch64 --output type=local,dest=. .
 ```
 
+Upon successful build, the application (`.eap` file) will be located in the main directory (`opc-ua-plugin-server/`).
+
 ### Docker (development containers)
 
-If you want to start developing your own version of the ACAP or to customize the
+If you want to start developing your own version of the application or to customize the
 provided example, it is recommend to do it inside a Docker container to speed up
 the development cycle by avoiding the recompilation of all the source code.
 
@@ -63,7 +83,7 @@ Start by building a Docker image with the needed libraries. The command will
 differ depending on the target architecture (armv7hf or aarch64).
 
 ```sh
-make dev-image-arm7hf
+make dev-image-armv7hf
 ```
 
 or
@@ -92,11 +112,16 @@ cd app
 acap-build .
 ```
 
-## Install and Setup
+Upon successful build, the application (`.eap` file) will be located in the app directory (`opt/app/app`).
+
+> [!NOTE]
+> Initial build of the application may take some time. Consider taking a coffee break.
+
+## Install and setup
 
 ### Install
 
-The ACAP (`.eap` file) can be uploaded to the Axis camera either via the "Apps"
+The application (`.eap` file) can be uploaded to the Axis device either via the "Apps"
 section of the web GUI or, by using the command-line. The ACAP SDK includes a
 shell script called `eap-install.sh` which can be used to perform various
 actions on the `.eap` file like uploading, starting, stopping or removing the
@@ -107,47 +132,44 @@ eap-install.sh --help
 ```
 
 inside the running developer container. So, for example, to upload and start the
-newly built OPC-UA server ACAP you can run:
+newly built OPC-UA server application you can run:
 
 ```sh
-eap-install.sh <camera hostname/ip> <username> <password> install
+eap-install.sh <device hostname/ip> <username> <password> install
 ```
 
 ### Setup
 
-The ACAP has two configurable parameters shown under the **Settings** section
+The application has two configurable parameters shown under the **Settings** section
 (see the picture below):
 
 - the logging level (default being info)
 
 - the listening TCP port (default being 4840)
 
-![OPC-UA Server Settings](assets/Parameters.png "OPC-UA Server ACAP Settings")
+![OPC-UA Server Settings](assets/Parameters.png "OPC-UA Server application Settings")
 
 The parameters can also be listed and set by running these commands:
 
-- to list the ACAP parameters with their current values:
+- to list the application parameters with their current values:
 
 ```sh
-curl --insecure --anyauth --user <username>:<password> \
-    'https://<camera hostname/ip>/axis-cgi/param.cgi?action=list&group=axisopcua'
+curl --insecure --anyauth --user <username>:<password> 'https://<device hostname/ip>/axis-cgi/param.cgi?action=list&group=opcpluginserver'
 ```
 
 - to set a parameter value, for example to set the server port to **4841**:
 
 ```sh
-curl --insecure --anyauth --user <username>:<password> \
-    'https://<camera hostname/ip>/axis-cgi/param.cgi?action=update&axisopcua.port=4841'
+curl --insecure --anyauth --user <username>:<password> 'https://<device hostname/ip>/axis-cgi/param.cgi?action=update&opcpluginserver.port=4841'
 ```
 
 - to set the log level to **Info**:
 
 ```sh
-curl --insecure --anyauth --user <username>:<password> \
-    'https://<camera hostname/ip>/axis-cgi/param.cgi?action=update&axisopcua.loglevel=1'
+curl --insecure --anyauth --user <username>:<password> 'https://<device hostname/ip>/axis-cgi/param.cgi?action=update&opcpluginserver.loglevel=1'
 ```
 
-The ACAP supports five different log levels. Each level has a corresponding
+The application supports five different log levels. Each level has a corresponding
 number, as following:
 
 - 0 - Debug
@@ -157,7 +179,7 @@ number, as following:
 - 4 - Fatal
 
 > [!NOTE]
-> If any parameter is modified, the ACAP requires a restart.
+> If any parameter is modified, the application requires a restart.
 
 ### Usage
 
@@ -180,7 +202,7 @@ Use custom discovery to find the OPC-UA Server.
 After clicking on **Add Server**, under **Custom Discovery**, there will be a
 text input to enter the URL/Endpoint for the server.
 
-If the camera's IP is 192.168.0.90 and the OPC-UA server port is 4840 (the
+If the device's IP is 192.168.0.90 and the OPC-UA server port is 4840 (the
 default value), the server endpoint URL will be:
 
 >opc.tcp://192.168.0.90:4840
@@ -204,30 +226,14 @@ picture below.
 ![UAExpert](assets/UAExpert_InfoModel.png)
 
 There is one *object node* called **BasicDeviceInfo** with *property nodes*
-presenting different information about the active camera. This is implemented in
+presenting different information about the active device. This is implemented in
 the **plugins/bdi** module. The **plugins/hello_world** module is responsible
 for creating a *variable node*, called **HelloWorldNode** with the string value
 "Hello World!".
 
-## Products and Firmware Version
-
-The ACAP has been tested on the following products (with firmware version):
-
-- AXIS Q1645 - 11.7.61
-- AXIS F9111 - 12.2.58
-- AXIS P3265-LV - 12.0.4
-- AXIS Q1961-TE - 12.0.10
-
->[!NOTE]
-> The ACAP may work on other Axis cameras and firmware versions beyond those
-> listed, but compatibility is not guaranteed. Users are advised to test the
-> ACAP on their specific device and firmware version before deploying it in
-> production. For more information on compatibility, please visit the
-> [**Axis Developer Documentation**](https://developer.axis.com/acap/axis-devices-and-compatibility/).
-
 ## Create your own plugin
 
-The ACAP was designed to support easy addition of new plugins. The *plugins* are
+The application was designed to support easy addition of new plugins. The *plugins* are
 essentially dynamically loaded libraries. They are implemented using GLib's
 GModule APIs.
 
@@ -235,42 +241,49 @@ Create a new directory under *app/plugins/* and copy a Makefile from the example
 plugin. Each plugin will need its own Makefile.
 
 ```text
-axis-opcua
+opc-ua-plugin-server
 ├── app
-│   ├── include
-│   │   ├── error.h
-│   │   ├── log.h
-│   │   └── plugin.h
-│   ├── plugins
-│   │   ├── bdi
-│   │   │   ├── bdi_plugin.c
-│   │   │   ├── bdi_plugin.h
-│   │   │   └── Makefile
-│   │   ├── hello_world
-│   │   │   ├── hello_world_plugin.c
-│   │   │   ├── hello_world_plugin.h
-│   │   │   └── Makefile
-│   │   └── your_plugin
-│   │       ├── your_plugin.c
-│   │       ├── your_plugin.h
-│   │       └── Makefile
-│   ├── opcua_parameter.c
-│   ├── opcua_parameter.h
-│   ├── opcua_open62541.c
-│   ├── opcua_open62541.h
-│   ├── opcua_server.c
-│   ├── opcua_server.h
-│   ├── plugin.c
-│   ├── LICENSE
-│   ├── Makefile
-│   └── manifest.json
+│   ├── include
+│   │   ├── error.h
+│   │   ├── log.h
+│   │   └── plugin.h
+│   ├── LICENSE
+│   ├── Makefile
+│   ├── manifest.json
+│   ├── opcua_open62541.c
+│   ├── opcua_open62541.h
+│   ├── opcua_parameter.c
+│   ├── opcua_parameter.h
+│   ├── opcua_server.c
+│   ├── opcua_server.h
+│   ├── plugin.c
+│   └── plugins
+│       ├── bdi
+│       │   ├── bdi_plugin.c
+│       │   ├── bdi_plugin.h
+│       │   └── Makefile
+│       ├── hello_world
+│       │   ├── hello_world_plugin.c
+│       │   ├── hello_world_plugin.h
+│       │   └── Makefile
+│       └── your_plugin
+│           ├── your_plugin.c
+│           ├── your_plugin.h
+│           └── Makefile
+├── assets
+├── CODEOWNERS
+├── CONTRIBUTING.md
+├── devel-containers
+│   └── Dockerfile.devimg
 ├── Dockerfile
+├── LICENSE
+├── Makefile
 └── README.md
 ```
 
 To use ACAP SDK APIs add the required package(s) by editing the `PKGS` variable
 in the Makefile. See
-[**ACAP developer pages**](https://developer.axis.com/acap/) for available APIs.
+[**ACAP developer documentation**](https://developer.axis.com/acap/) for available APIs.
 
 ```make
 # Add packages to this variable in the Makefile
@@ -283,7 +296,7 @@ directory name under *plugins/*. For example, if the chosen directory name was
 `libopcua_gas_sensor.so` and will be added to the `app/lib` folder which is
 going to be part of the ACAP package file (`.eap`).
 
-When the ACAP is started on the Axis camera, it will automatically attempt to
+When the application is started on the Axis device, it will automatically attempt to
 load all the modules present under its `lib` directory.
 
 >[!NOTE]
@@ -312,10 +325,10 @@ opc_ua_get_name(void)
 ```
 
 These functions need to be defined for the plugin to be loaded successfully by
-the server application. During start up the server ACAP will try to load all the
+the server application. During start up the server application will try to load all the
 existing plugins and will call *`opc_ua_create()`* for each one of them.
 
-Similarly, when the ACAP is stopped, *`opc_ua_destroy()`* will be called for
+Similarly, when the application is stopped, *`opc_ua_destroy()`* will be called for
 every plugin that was loaded.
 
 Some features in the Open62541 library are optional and can be enabled using
@@ -338,10 +351,10 @@ cmake -DCMAKE_INSTALL_PREFIX=${SDKTARGETSYSROOT}/usr \
 ```
 
 By default, only basic functionality is available. Additional flags can be added
-to enable more features, but this may increase the ACAP's memory consumption.
+to enable more features, but this may increase the application's memory consumption.
 
 >[!NOTE]
->There are two Dockerfiles, one for building the whole ACAP and one for starting
+>There are two Dockerfiles, one for building the whole application and one for starting
 >the development container. Make sure to modify the one that you are using.
 
 ## Limitations
@@ -358,10 +371,10 @@ If this is required please contact us for further discussions.
 
 ### Certification
 
-The ACAP is not certified by the OPC Foundation. Although it uses the
+The ACAP application is not certified by the OPC Foundation. Although it uses the
 [**open62541**](https://www.open62541.org/) library, which is certified for
-version 1.4.0-re, this certification does not extend to the ACAP itself. In
-other words, the ACAP has not undergone the OPC Foundation's certification
+version 1.4.0-re, this certification does not extend to the ACAP application itself. In
+other words, the ACAP application has not undergone the OPC Foundation's certification
 process, and its compliance with OPC-UA standards is not guaranteed. Read more
 about the open62541 certification
 [**here**](https://opcfoundation.org/products/view/open62541/).
