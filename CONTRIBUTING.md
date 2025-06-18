@@ -143,10 +143,8 @@ Run the following command in a terminal to lint the codebase locally:
 docker run --rm \
     -v $PWD:/tmp/lint \
     -e RUN_LOCAL=true \
-    -e LINTER_RULES_PATH=/ \
-    -e MARKDOWN_CONFIG_FILE=.markdownlint.yml \
-    -e VALIDATE_MARKDOWN_PRETTIER=false \
-    github/super-linter:slim-v4
+    --env-file ".github/super-linter.env" \
+    ghcr.io/super-linter/super-linter:slim-v7
 ```
 
 #### Pull request checklist
