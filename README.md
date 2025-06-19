@@ -105,7 +105,7 @@ make devel-aarch64
 ```
 
 The above commands will drop you in a shell in the container. To build the ACAP
-within the container, use:
+application within the container, use:
 
 ```sh
 cd app
