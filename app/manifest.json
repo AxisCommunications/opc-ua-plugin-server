@@ -14,7 +14,7 @@
       "vendor": "Axis Communications",
       "vendorUrl": "https://www.axis.com",
       "embeddedSdkVersion": "3.0",
-      "runMode": "never",
+      "runMode": "respawn",
       "version": "0.0.1"
     },
     "configuration": {

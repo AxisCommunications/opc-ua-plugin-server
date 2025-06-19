@@ -364,9 +364,8 @@ vapix_get_basic_device_information(GHashTable **bdi_hashtable, GError **err)
   }
 
 out:
-  if (json_response != NULL) {
-    json_decref(json_response);
-  }
+  g_clear_pointer(&response, g_free);
+  g_clear_pointer(&json_response, json_decref);
 
   if (curl_h != NULL) {
     curl_easy_cleanup(curl_h);
