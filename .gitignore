@@ -5,3 +5,4 @@
 cscope.out
 tags
 *.d
+!.githooks.d
