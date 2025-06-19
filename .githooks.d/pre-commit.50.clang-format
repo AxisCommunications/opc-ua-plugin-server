@@ -6,9 +6,9 @@ set -e
 
 # check if supported version exist
 if ! which clang-format-13 >/dev/null; then
-    echo "clang-format-13 is currently not installed"
-    echo "Please install clang-format-13: sudo apt-get install clang-format-13"
-    exit 1
+	echo "clang-format-13 is currently not installed"
+	echo "Please install clang-format-13: sudo apt-get install clang-format-13"
+	exit 1
 fi
 
 echo "--Checking style--"
@@ -16,25 +16,25 @@ echo "--Checking style--"
 patchfile="clang.patch"
 
 # create patch
-git diff -U0 --no-color --cached | clang-format-diff-13 -p 1 -iregex ".*\.(c|cc|cpp|h|hh|hpp)" > $patchfile
-clangdiff=$( cat $patchfile )
+git diff -U0 --no-color --cached | clang-format-diff-13 -p 1 -iregex ".*\.(c|cc|cpp|h|hh|hpp)" >$patchfile
+clangdiff=$(cat $patchfile)
 
 if [ "$clangdiff" ]; then
-    cat $patchfile
-    echo ""
-    printf "Apply patch to fix code style? [y/n]: "
-    exec < /dev/tty
-    read answer
-    if [ "$answer" = "y" ]; then
-        echo "Applying patch ......"
-        git apply -p 0 $patchfile
-        git apply -p 0 --cached $patchfile
-    else
-        echo ""
-        echo "Please fix coding style before submitting the patch"
-        rm $patchfile
-        exit 1;
-    fi
+	cat $patchfile
+	echo ""
+	printf "Apply patch to fix code style? [y/n]: "
+	exec </dev/tty
+	read -r answer
+	if [ "$answer" = "y" ]; then
+		echo "Applying patch ......"
+		git apply -p 0 $patchfile
+		git apply -p 0 --cached $patchfile
+	else
+		echo ""
+		echo "Please fix coding style before submitting the patch"
+		rm $patchfile
+		exit 1
+	fi
 fi
 
 echo ""
