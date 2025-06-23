@@ -12,7 +12,7 @@ ARG BUILD_DIR=/opt/app
 FROM ${REPO}/${SDK}:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} AS builder
 
 ARG BUILD_DIR
-ARG ARCH=aarch64
+ARG ARCH
 
 #-------------------------------------------------------------------------------
 # open62541 variables
@@ -59,7 +59,7 @@ rm -rf /var/lib/apt/lists/* || {
 EOF
 
 #-------------------------------------------------------------------------------
-# Build open65421
+# Build open62541
 #-------------------------------------------------------------------------------
 WORKDIR ${BUILD_DIR}
 

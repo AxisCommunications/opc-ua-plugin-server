@@ -16,7 +16,7 @@ library. For an introduction to OPC-UA, see
 <!-- omit in toc -->
 ## Table of contents
 
-- [Products and firmware versions](#products-and-firmware-version)
+- [Products and device software](#products-and-device-software)
 - [Build the application](#build-the-application)
     - [Make and Docker](#make-and-docker)
     - [Docker](#docker)
@@ -31,7 +31,7 @@ library. For an introduction to OPC-UA, see
     - [Certification](#certification)
 - [License](#license)
 
-## Products and firmware version
+## Products and device software
 
 The application has been tested on the following products (with firmware version):
 
