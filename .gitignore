@@ -6,3 +6,8 @@ cscope.out
 tags
 *.d
 !.githooks.d
+opcpluginserver
+*.old
+*.conf
+*.orig
+.*-var_log_messages.txt
