@@ -18,9 +18,10 @@ library. For an introduction to OPC-UA, see
 
 - [Products and device software](#products-and-device-software)
 - [Build the application](#build-the-application)
-    - [Make and Docker](#make-and-docker)
-    - [Docker](#docker)
-    - [Docker (development containers)](#docker-development-containers)
+    - [Build on UNIX-like machines](#build-on-unix-like-machines)
+        - [Docker](#docker)
+        - [Docker (development containers)](#docker-development-containers)
+    - [Build on Windows machines](#build-on-windows-machines)
 - [Install and setup](#install-and-setup)
     - [Install](#install)
     - [Setup](#setup)
@@ -49,7 +50,10 @@ The application has been tested on the following products (with firmware version
 
 ## Build the application
 
-### Make and docker
+### Build on UNIX-like machines
+
+If you are running a UNIX-like operating system (Ubuntu, macOS, etc.) you can
+navigate to the directory with the source code and issue:
 
 ```sh
 make dockerbuild
@@ -58,7 +62,7 @@ make dockerbuild
 This will build the application (server and all plugins) for both supported
 architectures: armv7hf and aarch64.
 
-### Docker
+#### Docker
 
 Alternatively, you can build the application for each architecture using the following
 commands without invoking `make`:
@@ -73,7 +77,7 @@ docker build --build-arg ARCH=aarch64 --output type=local,dest=. .
 
 Upon successful build, the application (`.eap` file) will be located in the main directory (`opc-ua-plugin-server/`).
 
-### Docker (development containers)
+#### Docker (development containers)
 
 If you want to start developing your own version of the application or to customize the
 provided example, it is recommend to do it inside a Docker container to speed up
@@ -116,6 +120,37 @@ Upon successful build, the application (`.eap` file) will be located in the app 
 
 > [!NOTE]
 > Initial build of the application may take some time. Consider taking a coffee break.
+
+### Build on Windows machines
+
+Follow the [**Axis Developer Documentation**](https://developer.axis.com/acap/get-started/set-up-developer-environment/pre-requisites/)
+to set up your development environment.
+
+> [!NOTE]
+> An important first step if you are running Windows is to make sure Git is not
+> altering the end-of-line format of the files. The `core.autocrlf` option must
+> be set to `false` since there are a few files which must be kept with
+> UNIX-style line endings. For example, you can edit your global Git
+> configuration by running `git config --global --edit` and checking the
+> `[core]` section to include a line reading `autocrlf = false`.
+
+After cloning the source code from GitHub open a Windows command shell or power
+shell where the source code was placed and issue any of the following commands
+depending on the targeted Axis device:
+
+```sh
+# 32-bit ARM, e.g. ARTPEC-6- and ARTPEC-7-based devices
+docker build --build-arg ARCH=armv7hf --output type=local,dest=. .
+
+# 64-bit ARM, e.g. ARTPEC-8-based devices
+docker build --build-arg ARCH=aarch64 --output type=local,dest=. .
+```
+
+The corresponding  ACAP application package (`.eap` file) will be built and
+placed in your current working directory.
+
+Note: omitting the architecture parameter (`--build-arg ARCH=xxx`) will simply
+default to `ARCH=aarch64`.
 
 ## Install and setup
 
