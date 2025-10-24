@@ -1,2 +1,13 @@
 *.log
 .DS_Store
+*.eap
+*_LICENSE.txt
+cscope.out
+tags
+*.d
+!.githooks.d
+opcpluginserver
+*.old
+*.conf
+*.orig
+.*-var_log_messages.txt

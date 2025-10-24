@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.7.0",
+  "resources": {
+    "dbus": {
+      "requiredMethods": [
+        "com.axis.HTTPConf1.VAPIXServiceAccounts1.GetCredentials"
+      ]
+    }
+  },
+  "acapPackageConf": {
+    "setup": {
+      "appName": "opcpluginserver",
+      "friendlyName": "OPC-UA Plugin server",
+      "vendor": "Axis Communications",
+      "vendorUrl": "https://www.axis.com",
+      "embeddedSdkVersion": "3.0",
+      "runMode": "respawn",
+      "version": "0.0.1"
+    },
+    "configuration": {
+      "paramConfig": [
+        {
+          "name": "LogLevel",
+          "type": "enum:0|Debug, 1|Info, 2|Warning, 3|Error, 4|Fatal",
+          "default": "1"
+        },
+        {
+          "name": "Port",
+          "type": "int:min=1024,max=65535",
+          "default": "4840"
+        }
+      ]
+    }
+  }
+}

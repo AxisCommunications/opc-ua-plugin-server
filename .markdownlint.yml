@@ -1,3 +1,4 @@
+---
 # Unordered list indentation
 # Reason: Due to the EditorConfig setting of using 4 spaces as indentation, we
 # also need to align the linter to respect 4 spaces.

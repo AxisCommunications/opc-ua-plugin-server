@@ -101,13 +101,13 @@ Enhancement suggestions are tracked as [GitHub issues][issues].
 Start by [forking the repository](https://docs.github.com/github/getting-started-with-github/fork-a-repo), i.e. copying the repository to your account to grant you write access. Continue with cloning the forked repository to your local machine.
 
 ```sh
-git clone https://github.com/<your username>/REPO_NAME.git
+git clone https://github.com/<your username>/opc-ua-plugin-server.git
 ```
 
 Navigate into the cloned directory and create a new branch:
 
 ```sh
-cd REPO_NAME
+cd opc-ua-plugin-server
 git switch -c <branch name>
 ```
 
@@ -143,10 +143,8 @@ Run the following command in a terminal to lint the codebase locally:
 docker run --rm \
     -v $PWD:/tmp/lint \
     -e RUN_LOCAL=true \
-    -e LINTER_RULES_PATH=/ \
-    -e MARKDOWN_CONFIG_FILE=.markdownlint.yml \
-    -e VALIDATE_MARKDOWN_PRETTIER=false \
-    github/super-linter:slim-v4
+    --env-file ".github/super-linter.env" \
+    ghcr.io/super-linter/super-linter:slim-v7
 ```
 
 #### Pull request checklist
@@ -160,9 +158,9 @@ Before opening a pull request (PR), please consider the following guidelines:
 And finally when you are satisfied with your changes, open a new PR.
 
 <!-- markdownlint-disable MD034 -->
-[issues]: https://github.com/AxisCommunications/REPO_NAME/issues
-[issues_new]: https://github.com/AxisCommunications/REPO_NAME/issues/new
-[issues_bugs]: https://github.com/AxisCommunications/REPO_NAME/issues?q=label%3Abug
-[discussions]: https://github.com/AxisCommunications/REPO_NAME/discussions
-[discussions_new]: https://github.com/AxisCommunications/REPO_NAME/discussions/new
+[issues]: https://github.com/AxisCommunications/opc-ua-plugin-server/issues
+[issues_new]: https://github.com/AxisCommunications/opc-ua-plugin-server/issues/new
+[issues_bugs]: https://github.com/AxisCommunications/opc-ua-plugin-server/issues?q=label%3Abug
+[discussions]: https://github.com/AxisCommunications/opc-ua-plugin-server/discussions
+[discussions_new]: https://github.com/AxisCommunications/opc-ua-plugin-server/discussions/new
 <!-- markdownlint-enable MD034 -->
