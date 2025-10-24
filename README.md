@@ -30,6 +30,7 @@ library. For an introduction to OPC-UA, see
 - [Limitations](#limitations)
     - [Security](#security)
     - [Certification](#certification)
+    - [Memory Usage](#memory-usage)
 - [License](#license)
 
 ## Products and device software
@@ -413,6 +414,15 @@ other words, the ACAP application has not undergone the OPC Foundation's certifi
 process, and its compliance with OPC-UA standards is not guaranteed. Read more
 about the open62541 certification
 [**here**](https://opcfoundation.org/products/view/open62541/).
+
+### Memory Usage
+
+The memory usage of the application was measured at different stages.
+
+- Start: 13892 KB
+- UaExpert Connect: 13988 KB
+- UaExpert Subscribe: 14032 KB
+- UaExpert Subscribe (after a few minutes): 14144 KB
 
 ## License
 
