@@ -415,14 +415,25 @@ process, and its compliance with OPC-UA standards is not guaranteed. Read more
 about the open62541 certification
 [**here**](https://opcfoundation.org/products/view/open62541/).
 
-### Memory Usage
+### Memory usage
 
-The memory usage of the application was measured at different stages.
+The memory and disk usage of the application were measured at different stages.
+
+#### Memory Usage (RSS)
+
+The values represent the Resident Set Size (RSS), which is the portion of a process's memory held in RAM.
 
 - Start: 13892 KB
 - UaExpert Connect: 13988 KB
 - UaExpert Subscribe: 14032 KB
 - UaExpert Subscribe (after a few minutes): 14144 KB
+
+#### Disk Usage
+
+The disk usage of the application's directory is approximately: 16.4 MB.
+
+To check the available RAM and flash memory for your specific Axis product, please visit the
+[**Axis Product Selector**](https://www.axis.com/support/tools/product-selector).
 
 ## License
 
