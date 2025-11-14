@@ -283,7 +283,7 @@ out:
 static gboolean
 vapix_get_basic_device_information(GHashTable **bdi_hashtable, GError **err)
 {
-  gboolean retval = TRUE;
+  gboolean retval = FALSE;
   CURL *curl_h;
   g_autofree gchar *credentials = NULL;
   g_autofree gchar *response = NULL;
@@ -310,7 +310,6 @@ vapix_get_basic_device_information(GHashTable **bdi_hashtable, GError **err)
   credentials = get_vapix_credentials("vapix-basicdeviceinfo-user", err);
   if (credentials == NULL) {
     g_prefix_error(err, "Failed to get the VAPIX credentials: ");
-    retval = FALSE;
     goto out;
   }
 
@@ -321,7 +320,6 @@ vapix_get_basic_device_information(GHashTable **bdi_hashtable, GError **err)
                        err);
   if (response == NULL) {
     g_prefix_error(err, "Failed to get the basic device information: ");
-    retval = FALSE;
     goto out;
   }
 
@@ -362,6 +360,8 @@ vapix_get_basic_device_information(GHashTable **bdi_hashtable, GError **err)
                           g_strdup(json_string_value(value)));
     }
   }
+
+  retval = TRUE;
 
 out:
   g_clear_pointer(&response, g_free);
@@ -496,14 +496,14 @@ add_basic_device_info_data(UA_Server *server, UA_NodeId bdiNode, GError **err)
       LOG_W(plugin->logger,
             "add_variable_to_object() failed: %s",
             GERROR_MSG(lerr));
-      g_clear_error(&lerr);
+      goto err_out;
     }
   }
-  g_hash_table_unref(bdi_hashtable);
 
   retval = TRUE;
 
 err_out:
+  g_hash_table_unref(bdi_hashtable);
   g_clear_error(&lerr);
 
   return retval;
@@ -516,7 +516,7 @@ plugin_cleanup(void)
 
   plugin->logger = NULL;
   g_clear_pointer(&plugin->name, g_free);
-  g_slice_free(plugin_t, plugin);
+  g_clear_pointer(&plugin, g_free);
 }
 
 /* Exported functions */
@@ -536,7 +536,7 @@ opc_ua_create(UA_Server *server,
     return TRUE;
   }
 
-  plugin = g_slice_new0(plugin_t);
+  plugin = g_new0(plugin_t, 1);
 
   plugin->name = g_strdup(UA_PLUGIN_NAME);
   plugin->logger = logger;
@@ -545,18 +545,23 @@ opc_ua_create(UA_Server *server,
   /* add a bdi object to the opc-ua server */
   if (!add_bdi_object(server, &bdi_node, err)) {
     g_prefix_error(err, "add_bdi_object() failed: ");
-    plugin_cleanup();
-    return FALSE;
+    goto err_out;
   }
 
   /* add the actual values to the nodes */
   if (!add_basic_device_info_data(server, bdi_node, err)) {
     g_prefix_error(err, "add_basic_device_info_data() failed: ");
-    plugin_cleanup();
-    return FALSE;
+    goto err_out;
   }
 
   return TRUE;
+
+err_out:
+  /* Remove the added nodes from the server if something fails */
+  UA_Server_deleteNode(server, bdi_node, TRUE);
+  plugin_cleanup();
+
+  return FALSE;
 }
 
 void

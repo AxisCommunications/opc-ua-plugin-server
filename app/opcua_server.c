@@ -110,10 +110,10 @@ init_ua_plugin(gpointer data, gpointer user_data)
           name,
           GERROR_MSG(lerr));
     g_clear_error(&lerr);
-    return;
+  } else {
+    LOG_I(&ctx->logger, "Loaded plugin: %s", plugin->fs.ua_get_plugin_name());
   }
 
-  LOG_I(&ctx->logger, "Loaded plugin: %s", plugin->fs.ua_get_plugin_name());
   ctx->plugins = g_slist_append(ctx->plugins, plugin);
 }
 
