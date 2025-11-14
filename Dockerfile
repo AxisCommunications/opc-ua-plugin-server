@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.3-labs
+# syntax=docker/dockerfile:1.19-labs
 
 # The ARCH can be overridden by providing it a value in the command line
 # with the "--build-arg=XXX" argument fed to 'docker build'.
