@@ -28,6 +28,11 @@
           "name": "Port",
           "type": "int:min=1024,max=65535",
           "default": "4840"
+        },
+        {
+          "name": "ExtendLogs",
+          "type": "bool:no,yes",
+          "default": "no"
         }
       ]
     }

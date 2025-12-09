@@ -23,37 +23,49 @@
  * SOFTWARE.
  */
 
-#ifndef __OPCUA_SERVER_H__
-#define __OPCUA_SERVER_H__
+#ifndef __THERMAL_VAPIX_H__
+#define __THERMAL_VAPIX_H__
 
-#include <axsdk/axparameter.h>
+#include <curl/curl.h>
 #include <glib.h>
-#include <open62541/plugin/log.h>
-#include <open62541/types.h>
 
-#include "plugin.h"
+typedef struct thermal_area {
+  gchar *detectionType;
+  gboolean enabled;
+  guint32 id;
+  gchar *measurement;
+  gint32 presetNbr;
+  gint32 threshold;
+  gchar *name;
+} thermal_area_t;
 
-typedef struct {
-  /* application main loop */
-  GMainLoop *main_loop;
-  /* handle to application configuration parameters */
-  AXParameter *axparam;
-  /* list of actively loaded OPC-UA plugins */
-  GSList *plugins;
-  /* an open62541 logger instance */
-  UA_Logger logger;
-  /* runtime logging level (user configurable parameter) */
-  UA_LogLevel log_level;
-  /* TCP listening port of the OPC-UA server (user configurable parameter) */
-  guint port;
-  /* an open62541 server instance */
-  UA_Server *server;
-  /* flag to signal the server thread to finish */
-  volatile UA_Boolean ua_server_running;
-  /* a GLib thread handle for the OPC-UA thread */
-  GThread *ua_server_thread_id;
-  /* flag to extend the logs or not */
-  gboolean extend_logs;
-} app_context_t;
+typedef struct thermal_area_values {
+  guint32 id;
+  gdouble avg;
+  gdouble max;
+  gdouble min;
+  gboolean triggered;
+} thermal_area_values_t;
 
-#endif /* __OPCUA_SERVER_H__ */
+gboolean
+vapix_get_supported_versions(gchar *credentials, CURL *curl_h, GError **err);
+
+gboolean
+vapix_get_thermal_areas(gchar *credentials,
+                        CURL *curl_h,
+                        GList **areas,
+                        GError **err);
+
+gboolean
+vapix_get_thermal_area_status(gchar *credentials,
+                              CURL *curl_h,
+                              GList **areas,
+                              GError **err);
+
+gboolean
+vapix_set_temperature_scale(gchar *credentials,
+                            CURL *curl_h,
+                            gchar *scale,
+                            GError **err);
+
+#endif /* __THERMAL_VAPIX_H__ */

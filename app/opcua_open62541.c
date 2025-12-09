@@ -95,7 +95,9 @@ ua_server_init(app_context_t *ctx,
   /* Adjust the logging level for the server thread to be in sync with the
    * logging level set for the ACAP via the 'LogLevel' configuration parameter.
    */
-  config->logging->context = (void *) log_level;
+  if (ctx->extend_logs) {
+    config->logging->context = (void *) log_level;
+  }
 
   /* Name of the server */
   UA_String_clear(&config->applicationDescription.applicationName.text);

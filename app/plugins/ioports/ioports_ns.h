@@ -23,37 +23,29 @@
  * SOFTWARE.
  */
 
-#ifndef __OPCUA_SERVER_H__
-#define __OPCUA_SERVER_H__
+#ifndef __IOPORTS_NS_H__
+#define __IOPORTS_NS_H__
 
-#include <axsdk/axparameter.h>
-#include <glib.h>
-#include <open62541/plugin/log.h>
-#include <open62541/types.h>
+#include <open62541/server.h>
 
-#include "plugin.h"
+#include "ioports_types.h"
+#include "ua_utils.h"
 
-typedef struct {
-  /* application main loop */
-  GMainLoop *main_loop;
-  /* handle to application configuration parameters */
-  AXParameter *axparam;
-  /* list of actively loaded OPC-UA plugins */
-  GSList *plugins;
-  /* an open62541 logger instance */
-  UA_Logger logger;
-  /* runtime logging level (user configurable parameter) */
-  UA_LogLevel log_level;
-  /* TCP listening port of the OPC-UA server (user configurable parameter) */
-  guint port;
-  /* an open62541 server instance */
-  UA_Server *server;
-  /* flag to signal the server thread to finish */
-  volatile UA_Boolean ua_server_running;
-  /* a GLib thread handle for the OPC-UA thread */
-  GThread *ua_server_thread_id;
-  /* flag to extend the logs or not */
-  gboolean extend_logs;
-} app_context_t;
+#define UA_PLUGIN_NAMESPACE "http://www.axis.com/OpcUA/IOPorts/"
 
-#endif /* __OPCUA_SERVER_H__ */
+#define IOP_OBJ_NR_PROPS 8
+/* I/O port: object properties */
+#define CONFIGURABLE_BNAME "Configurable"
+#define DIRECTION_BNAME    "Direction"
+#define DISABLED_BNAME     "Disabled"
+#define INDEX_BNAME        "Index"
+#define NAME_BNAME         "Name"
+#define NORMALSTATE_BNAME  "NormalState"
+#define STATE_BNAME        "State"
+#define USAGE_BNAME        "Usage"
+
+/* adds the ioports namespace to the information model */
+UA_StatusCode
+ioports_ns(UA_Server *server, rollback_data_t *rbd);
+
+#endif /* __IOPORTS_NS_H__ */
