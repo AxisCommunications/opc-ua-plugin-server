@@ -7,7 +7,7 @@ This repository contains the source code for building an OPC-UA Server ACAP appl
 along with a guide on developing and building custom modules/plugins.
 You can create your own plugins to address specific use cases. Example
 plugins are provided and briefly described below, for more information about a
-plugin see its README.
+plugin see its readme.
 
 The OPC-UA Server is based on the [**open62541**](https://www.open62541.org/)
 library. For an introduction to OPC-UA, see
@@ -266,12 +266,12 @@ picture below.
 
 This application includes the source code for several plugins, which serve both as functional components and as examples for custom development. The currently available plugins are:
 
-- The `bdi` plugin (`plugins/bdi`) provides a **BasicDeviceInfo** object node with device-specific properties (See [README](app/plugins/bdi/README.md) for details).
-- The `hello_world` plugin (`plugins/hello_world`) creates a **HelloWorldNode** variable (See [README](app/plugins/hello_world/README.md) for details).
-- The `ioports` plugin (`plugins/ioports`) exposes I/O port status and control (See [README](app/plugins/ioports/README.md) for details).
-- The `simple_event` plugin (`plugins/simple_event`) demonstrates Axis event integration via OPC-UA events (See [README](app/plugins/simple_event/README.md) for details).
-- The `thermal` plugin (`plugins/thermal`) exposes thermal camera data and controls (See [README](app/plugins/thermal/README.md) for details).
-- The `vinput` plugin (`plugins/vinput`) provides control over virtual inputs (See [README](app/plugins/vinput/README.md) for details).
+- The `bdi` plugin (`plugins/bdi`) provides a **BasicDeviceInfo** object node with device-specific properties (See [readme](app/plugins/bdi/README.md) for details).
+- The `hello_world` plugin (`plugins/hello_world`) creates a **HelloWorldNode** variable (See [readme](app/plugins/hello_world/README.md) for details).
+- The `ioports` plugin (`plugins/ioports`) exposes I/O port status and control (See [readme](app/plugins/ioports/README.md) for details).
+- The `simple_event` plugin (`plugins/simple_event`) demonstrates Axis event integration via OPC-UA events (See [readme](app/plugins/simple_event/README.md) for details).
+- The `thermal` plugin (`plugins/thermal`) exposes thermal camera data and controls (See [readme](app/plugins/thermal/README.md) for details).
+- The `vinput` plugin (`plugins/vinput`) provides control over virtual inputs (See [readme](app/plugins/vinput/README.md) for details).
 
 ## Create your own plugin
 

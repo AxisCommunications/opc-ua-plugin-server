@@ -18,7 +18,7 @@ serial number, and other device-specific information.
 
 - **Interacting with the Plugin:**
     - Connect to the OPC-UA server using an OPC-UA client like UaExpert
-    (as described in the main ACAP README).
+    (as described in the main ACAP readme).
     - Navigate to the **BasicDeviceInfo** object node to view all available
     device properties.
     - Read operations can be performed on individual property nodes to
