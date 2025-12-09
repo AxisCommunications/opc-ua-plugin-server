@@ -23,37 +23,47 @@
  * SOFTWARE.
  */
 
-#ifndef __OPCUA_SERVER_H__
-#define __OPCUA_SERVER_H__
+#ifndef __IOPORTS_PLUGIN_H__
+#define __IOPORTS_PLUGIN_H__
 
-#include <axsdk/axparameter.h>
-#include <glib.h>
-#include <open62541/plugin/log.h>
-#include <open62541/types.h>
+#include <open62541/server.h>
 
-#include "plugin.h"
+/**
+ * opc_ua_create:
+ * @server: OPC-UA Server object
+ * @logger: an open62541 logger instance
+ * @params: pointer to user data (can be used to pass in additional parameters
+ *   for the initialization of the plugin)
+ * @err: return location for a #GError
+ *
+ * Sets up and initializes the plugin.
+ *
+ * Returns: TRUE if setup was successful, FALSE otherwise.
+ */
+gboolean
+opc_ua_create(UA_Server *server,
+              UA_Logger *logger,
+              G_GNUC_UNUSED gpointer *params,
+              GError **err);
 
-typedef struct {
-  /* application main loop */
-  GMainLoop *main_loop;
-  /* handle to application configuration parameters */
-  AXParameter *axparam;
-  /* list of actively loaded OPC-UA plugins */
-  GSList *plugins;
-  /* an open62541 logger instance */
-  UA_Logger logger;
-  /* runtime logging level (user configurable parameter) */
-  UA_LogLevel log_level;
-  /* TCP listening port of the OPC-UA server (user configurable parameter) */
-  guint port;
-  /* an open62541 server instance */
-  UA_Server *server;
-  /* flag to signal the server thread to finish */
-  volatile UA_Boolean ua_server_running;
-  /* a GLib thread handle for the OPC-UA thread */
-  GThread *ua_server_thread_id;
-  /* flag to extend the logs or not */
-  gboolean extend_logs;
-} app_context_t;
+/**
+ * opc_ua_destroy:
+ *
+ * Frees allocated resources and performs any necessary shutdown operations for
+ * the plugin.
+ */
+void
+opc_ua_destroy(void);
 
-#endif /* __OPCUA_SERVER_H__ */
+/**
+ * opc_ua_get_plugin_name:
+ *
+ * Retrieves the name of the plugin.
+ *
+ * Returns: the plugin name as set in the plugin constructor or an error string
+ *   if no name was set.
+ */
+const gchar *
+opc_ua_get_plugin_name(void);
+
+#endif /* __IOPORTS_PLUGIN_H__ */

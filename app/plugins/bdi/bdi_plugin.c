@@ -32,6 +32,8 @@
 #include "bdi_plugin.h"
 #include "error.h"
 #include "log.h"
+#include "ua_utils.h"
+#include "vapix_utils.h"
 
 #define UA_PLUGIN_NAMESPACE     "http://www.axis.com/OpcUA/BasicDeviceInformation/"
 #define UA_PLUGIN_NAME          "opc-bdi-plugin"
@@ -41,13 +43,7 @@
 #define ERR_NOT_INITIALIZED "The " UA_PLUGIN_NAME " is not initialized"
 #define ERR_NO_NAME         "The " UA_PLUGIN_NAME " was not given a name"
 
-#define VAPIX_URL "http://127.0.0.12/axis-cgi/%s"
-
 #define BASIC_DEVICE_INFO_CGI_ENDPOINT "basicdeviceinfo.cgi"
-
-#define CONF1_DBUS_SERVICE     "com.axis.HTTPConf1"
-#define CONF1_DBUS_OBJECT_PATH "/com/axis/HTTPConf1/VAPIXServiceAccounts1"
-#define CONF1_DBUS_INTERFACE   "com.axis.HTTPConf1.VAPIXServiceAccounts1"
 
 DEFINE_GQUARK(UA_PLUGIN_NAME)
 
@@ -58,227 +54,11 @@ typedef struct plugin {
   UA_UInt16 ns;
   /* an open62541 logger */
   UA_Logger *logger;
+  /* keep track of data that needs to be rolled back in case of failure */
+  rollback_data_t *rbd;
 } plugin_t;
 
 static plugin_t *plugin;
-
-/* Local functions */
-static size_t
-post_write_cb(gchar *ptr, size_t size, size_t nmemb, void *userdata)
-{
-  size_t processed_bytes;
-
-  g_assert(ptr != NULL);
-  g_assert(userdata != NULL);
-
-  processed_bytes = size * nmemb;
-
-  g_string_append_len((GString *) userdata, ptr, processed_bytes);
-
-  return processed_bytes;
-}
-
-static void
-set_curl_setopt_error(CURLcode res, GError **err)
-{
-  g_assert(err == NULL || *err == NULL);
-
-  SET_ERROR(err,
-            -1,
-            "curl_easy_setopt error %d: '%s'",
-            res,
-            curl_easy_strerror(res));
-}
-
-static gchar *
-post_full(CURL *handle,
-          const gchar *credentials,
-          const gchar *endpoint,
-          const gchar *request,
-          GError **err)
-{
-  glong code;
-  GString *response;
-  gchar *url = NULL;
-  CURLcode res;
-
-  g_assert(handle != NULL);
-  g_assert(credentials != NULL);
-  g_assert(endpoint != NULL);
-  g_assert(request != NULL);
-  g_assert(err == NULL || *err == NULL);
-
-  url = g_strdup_printf(VAPIX_URL, endpoint);
-  response = g_string_new(NULL);
-
-  res = curl_easy_setopt(handle, CURLOPT_URL, url);
-
-  if (res != CURLE_OK) {
-    set_curl_setopt_error(res, err);
-    goto err_out;
-  }
-
-  res = curl_easy_setopt(handle, CURLOPT_USERPWD, credentials);
-
-  if (res != CURLE_OK) {
-    set_curl_setopt_error(res, err);
-    goto err_out;
-  }
-
-  res = curl_easy_setopt(handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-
-  if (res != CURLE_OK) {
-    set_curl_setopt_error(res, err);
-    goto err_out;
-  }
-
-  res = curl_easy_setopt(handle, CURLOPT_POSTFIELDS, request);
-
-  if (res != CURLE_OK) {
-    set_curl_setopt_error(res, err);
-    goto err_out;
-  }
-
-  res = curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, post_write_cb);
-
-  if (res != CURLE_OK) {
-    set_curl_setopt_error(res, err);
-    goto err_out;
-  }
-
-  res = curl_easy_setopt(handle, CURLOPT_WRITEDATA, response);
-
-  if (res != CURLE_OK) {
-    set_curl_setopt_error(res, err);
-    goto err_out;
-  }
-
-  res = curl_easy_perform(handle);
-
-  if (res != CURLE_OK) {
-    SET_ERROR(err,
-              -1,
-              "curl_easy_perform error %d: '%s'",
-              res,
-              curl_easy_strerror(res));
-
-    goto err_out;
-  }
-
-  res = curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
-
-  if (res != CURLE_OK) {
-    SET_ERROR(err,
-              -1,
-              "curl_easy_getinfo error %d: '%s'",
-              res,
-              curl_easy_strerror(res));
-
-    goto err_out;
-  }
-
-  if (code != 200) {
-    SET_ERROR(err,
-              -1,
-              "Got response code %ld from request to %s with response '%s'",
-              code,
-              request,
-              response->str);
-    g_string_free(response, TRUE);
-    g_clear_pointer(&url, g_free);
-    return NULL;
-  }
-
-err_out:
-  g_clear_pointer(&url, g_free);
-
-  return g_string_free(response, FALSE);
-}
-
-static gchar *
-parse_credentials(GVariant *result, GError **err)
-{
-  gchar *v_creds = NULL;
-  gchar *credentials = NULL;
-  gchar **split = NULL;
-  guint len;
-
-  g_assert(result != NULL);
-  g_assert(err == NULL || *err == NULL);
-
-  g_variant_get(result, "(&s)", &v_creds);
-
-  split = g_strsplit(v_creds, ":", -1);
-  if (split == NULL) {
-    SET_ERROR(err, -1, "Error parsing credential string: '%s'", v_creds);
-    goto out;
-  }
-
-  len = g_strv_length(split);
-  if (len != 2) {
-    SET_ERROR(err,
-              -1,
-              "Invalid credential string length (%u): '%s'",
-              len,
-              v_creds);
-    goto out;
-  }
-
-  credentials = g_strdup_printf("%s:%s", split[0], split[1]);
-
-out:
-  if (split != NULL) {
-    g_strfreev(split);
-  }
-
-  return credentials;
-}
-
-static gchar *
-get_vapix_credentials(const gchar *username, GError **err)
-{
-  GDBusConnection *con = NULL;
-  GVariant *result = NULL;
-  gchar *credentials = NULL;
-
-  g_assert(username != NULL);
-  g_assert(err == NULL || *err == NULL);
-
-  con = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, err);
-  if (con == NULL) {
-    g_prefix_error(err, "Error connecting to D-Bus: ");
-    return NULL;
-  }
-
-  result = g_dbus_connection_call_sync(con,
-                                       CONF1_DBUS_SERVICE,
-                                       CONF1_DBUS_OBJECT_PATH,
-                                       CONF1_DBUS_INTERFACE,
-                                       "GetCredentials",
-                                       g_variant_new("(s)", username),
-                                       NULL,
-                                       G_DBUS_CALL_FLAGS_NONE,
-                                       -1,
-                                       NULL,
-                                       err);
-  if (result == NULL) {
-    g_prefix_error(err, "Failed to get credentials: ");
-    goto out;
-  }
-
-  credentials = parse_credentials(result, err);
-
-  if (credentials == NULL) {
-    g_prefix_error(err, "parse_credentials() failed: ");
-  }
-
-  g_variant_unref(result);
-
-out:
-  g_object_unref(con);
-
-  return credentials;
-}
 
 static gboolean
 vapix_get_basic_device_information(GHashTable **bdi_hashtable, GError **err)
@@ -307,17 +87,19 @@ vapix_get_basic_device_information(GHashTable **bdi_hashtable, GError **err)
     goto out;
   }
 
-  credentials = get_vapix_credentials("vapix-basicdeviceinfo-user", err);
+  credentials = vapix_get_credentials("vapix-basicdeviceinfo-user", err);
   if (credentials == NULL) {
     g_prefix_error(err, "Failed to get the VAPIX credentials: ");
     goto out;
   }
 
-  response = post_full(curl_h,
-                       credentials,
-                       BASIC_DEVICE_INFO_CGI_ENDPOINT,
-                       request,
-                       err);
+  response = vapix_request(curl_h,
+                           credentials,
+                           BASIC_DEVICE_INFO_CGI_ENDPOINT,
+                           HTTP_POST,
+                           JSON_data,
+                           request,
+                           err);
   if (response == NULL) {
     g_prefix_error(err, "Failed to get the basic device information: ");
     goto out;
@@ -327,7 +109,6 @@ vapix_get_basic_device_information(GHashTable **bdi_hashtable, GError **err)
 
   if (json_response == NULL) {
     SET_ERROR(err, -1, "Invalid JSON response: %s", parse_error.text);
-    retval = FALSE;
     goto out;
   }
 
@@ -389,6 +170,8 @@ add_variable_to_object(UA_Server *server,
   g_assert(name != NULL);
   g_assert(value != NULL);
   g_assert(err == NULL || *err == NULL);
+  g_assert(plugin != NULL);
+  g_assert(plugin->rbd != NULL);
 
   attr.accessLevel = UA_ACCESSLEVELMASK_READ;
   ua_value = UA_STRING(value);
@@ -398,19 +181,22 @@ add_variable_to_object(UA_Server *server,
   attr.description = UA_LOCALIZEDTEXT("en-US", name);
 
   retval =
-          UA_Server_addVariableNode(server,
-                                    UA_NODEID_NUMERIC(plugin->ns, 0),
-                                    parent,
-                                    UA_NODEID_NUMERIC(0, UA_NS0ID_HASPROPERTY),
-                                    UA_QUALIFIEDNAME(plugin->ns, name),
-                                    UA_NODEID_NUMERIC(0, UA_NS0ID_PROPERTYTYPE),
-                                    attr,
-                                    NULL,
-                                    NULL);
+          UA_Server_addVariableNode_rb(server,
+                                       UA_NODEID_NUMERIC(plugin->ns, 0),
+                                       parent,
+                                       UA_NODEID_NUMERIC(0,
+                                                         UA_NS0ID_HASPROPERTY),
+                                       UA_QUALIFIEDNAME(plugin->ns, name),
+                                       UA_NODEID_NUMERIC(0,
+                                                         UA_NS0ID_PROPERTYTYPE),
+                                       attr,
+                                       NULL,
+                                       plugin->rbd,
+                                       NULL);
   if (retval != UA_STATUSCODE_GOOD) {
     SET_ERROR(err,
               -1,
-              "UA_Server_addVariableNode() failed: %s",
+              "UA_Server_addVariableNode_rb() failed: %s",
               UA_StatusCode_name(retval));
     return FALSE;
   }
@@ -425,6 +211,7 @@ add_bdi_object(UA_Server *server, UA_NodeId *outId, GError **err)
   UA_ObjectAttributes attr = UA_ObjectAttributes_default;
 
   g_assert(plugin != NULL);
+  g_assert(plugin->rbd != NULL);
   g_assert(server != NULL);
   g_assert(outId != NULL);
   g_assert(err == NULL || *err == NULL);
@@ -433,20 +220,24 @@ add_bdi_object(UA_Server *server, UA_NodeId *outId, GError **err)
   attr.description = UA_LOCALIZEDTEXT("en-US", UA_BDI_OBJ_DESCRIPTION);
 
   status =
-          UA_Server_addObjectNode(server,
-                                  UA_NODEID_NUMERIC(plugin->ns, 0),
-                                  UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER),
-                                  UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES),
-                                  UA_QUALIFIEDNAME(plugin->ns,
-                                                   UA_BDI_OBJ_DISPLAY_NAME),
-                                  UA_NODEID_NUMERIC(0, UA_NS0ID_BASEOBJECTTYPE),
-                                  attr,
-                                  NULL,
-                                  outId);
+          UA_Server_addObjectNode_rb(server,
+                                     UA_NODEID_NUMERIC(plugin->ns, 0),
+                                     UA_NODEID_NUMERIC(0,
+                                                       UA_NS0ID_OBJECTSFOLDER),
+                                     UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES),
+                                     UA_QUALIFIEDNAME(plugin->ns,
+                                                      UA_BDI_OBJ_DISPLAY_NAME),
+                                     UA_NODEID_NUMERIC(0,
+                                                       UA_NS0ID_BASEOBJECTTYPE),
+                                     attr,
+                                     NULL,
+                                     plugin->rbd,
+                                     outId);
+
   if (status != UA_STATUSCODE_GOOD) {
     SET_ERROR(err,
               -1,
-              "Failed to add variable node BasicDeviceInfo: %s",
+              "Failed to add object node BasicDeviceInfo: %s",
               UA_StatusCode_name(status));
     return FALSE;
   }
@@ -461,7 +252,6 @@ add_basic_device_info_data(UA_Server *server, UA_NodeId bdiNode, GError **err)
   GHashTableIter ht_iter;
   gpointer key;
   gpointer value;
-  GError *lerr = NULL;
   gboolean retval = FALSE;
 
   g_assert(server != NULL);
@@ -492,10 +282,8 @@ add_basic_device_info_data(UA_Server *server, UA_NodeId bdiNode, GError **err)
                                 bdiNode,
                                 (gchar *) key,
                                 (gchar *) value,
-                                &lerr)) {
-      LOG_W(plugin->logger,
-            "add_variable_to_object() failed: %s",
-            GERROR_MSG(lerr));
+                                err)) {
+      g_prefix_error(err, "add_variable_to_object() failed: ");
       goto err_out;
     }
   }
@@ -504,7 +292,6 @@ add_basic_device_info_data(UA_Server *server, UA_NodeId bdiNode, GError **err)
 
 err_out:
   g_hash_table_unref(bdi_hashtable);
-  g_clear_error(&lerr);
 
   return retval;
 }
@@ -516,6 +303,10 @@ plugin_cleanup(void)
 
   plugin->logger = NULL;
   g_clear_pointer(&plugin->name, g_free);
+
+  /* free up allocated rollback data, if any */
+  ua_utils_clear_rbd(&plugin->rbd);
+
   g_clear_pointer(&plugin, g_free);
 }
 
@@ -526,6 +317,7 @@ opc_ua_create(UA_Server *server,
               G_GNUC_UNUSED gpointer *params,
               GError **err)
 {
+  GError *lerr = NULL;
   UA_NodeId bdi_node;
 
   g_return_val_if_fail(server != NULL, FALSE);
@@ -540,6 +332,8 @@ opc_ua_create(UA_Server *server,
 
   plugin->name = g_strdup(UA_PLUGIN_NAME);
   plugin->logger = logger;
+  plugin->rbd = g_new0(rollback_data_t, 1);
+
   plugin->ns = UA_Server_addNamespace(server, UA_PLUGIN_NAMESPACE);
 
   /* add a bdi object to the opc-ua server */
@@ -554,11 +348,20 @@ opc_ua_create(UA_Server *server,
     goto err_out;
   }
 
+  /* the information model was successfully populated so now we can free up our
+   * rollback data since we no longer need it */
+  ua_utils_clear_rbd(&plugin->rbd);
+
   return TRUE;
 
 err_out:
-  /* Remove the added nodes from the server if something fails */
-  UA_Server_deleteNode(server, bdi_node, TRUE);
+  if (!ua_utils_do_rollback(server, plugin->rbd, &lerr)) {
+    LOG_E(plugin->logger,
+          "ua_utils_do_rollback() failed: %s",
+          GERROR_MSG(lerr));
+    g_clear_error(&lerr);
+  }
+
   plugin_cleanup();
 
   return FALSE;

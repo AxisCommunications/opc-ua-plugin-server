@@ -23,37 +23,43 @@
  * SOFTWARE.
  */
 
-#ifndef __OPCUA_SERVER_H__
-#define __OPCUA_SERVER_H__
+#ifndef __IOPORTS_TYPES_H__
+#define __IOPORTS_TYPES_H__
 
-#include <axsdk/axparameter.h>
-#include <glib.h>
-#include <open62541/plugin/log.h>
 #include <open62541/types.h>
 
-#include "plugin.h"
+/**
+ * Every type is assigned an index in an array containing the type descriptions.
+ * These descriptions are used during type handling (copying, deletion,
+ * binary encoding, ...). */
+#define UA_TYPES_IOP_COUNT 2
+extern UA_EXPORT UA_DataType UA_TYPES_IOP[UA_TYPES_IOP_COUNT];
 
-typedef struct {
-  /* application main loop */
-  GMainLoop *main_loop;
-  /* handle to application configuration parameters */
-  AXParameter *axparam;
-  /* list of actively loaded OPC-UA plugins */
-  GSList *plugins;
-  /* an open62541 logger instance */
-  UA_Logger logger;
-  /* runtime logging level (user configurable parameter) */
-  UA_LogLevel log_level;
-  /* TCP listening port of the OPC-UA server (user configurable parameter) */
-  guint port;
-  /* an open62541 server instance */
-  UA_Server *server;
-  /* flag to signal the server thread to finish */
-  volatile UA_Boolean ua_server_running;
-  /* a GLib thread handle for the OPC-UA thread */
-  GThread *ua_server_thread_id;
-  /* flag to extend the logs or not */
-  gboolean extend_logs;
-} app_context_t;
+/* IOPortDirectionType */
+typedef enum {
+  UA_IOPORTDIRECTIONTYPE_INPUT = 0,
+  UA_IOPORTDIRECTIONTYPE_OUTPUT = 1,
+  __UA_IOPORTDIRECTIONTYPE_FORCE32BIT = 0x7fffffff
+} UA_IOPortDirectionType;
 
-#endif /* __OPCUA_SERVER_H__ */
+UA_STATIC_ASSERT(sizeof(UA_IOPortDirectionType) == sizeof(UA_Int32),
+                 enum_must_be_32bit);
+
+#define UA_TYPES_IOP_IOPORTDIRECTIONTYPE 0
+
+/* IOPortStateType */
+typedef enum {
+  UA_IOPORTSTATETYPE_OPEN = 0,
+  UA_IOPORTSTATETYPE_CLOSED = 1,
+  __UA_IOPORTSTATETYPE_FORCE32BIT = 0x7fffffff
+} UA_IOPortStateType;
+
+UA_STATIC_ASSERT(sizeof(UA_IOPortStateType) == sizeof(UA_Int32),
+                 enum_must_be_32bit);
+
+#define UA_TYPES_IOP_IOPORTSTATETYPE 1
+
+#define UA_TYPE_IOP_STATETYPE_NAME "IOPortStateType"
+#define UA_TYPE_IOP_DIRTYPE_NAME   "IOPortDirectionType"
+
+#endif /* __IOPORTS_TYPES_H__ */

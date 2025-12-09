@@ -83,6 +83,25 @@ handle_port(app_context_t *ctx, gint val, GError **err)
 }
 
 static gboolean
+handle_extend_logs(app_context_t *ctx, const gchar *val, GError **err)
+{
+  g_assert(ctx != NULL);
+  g_assert(val != NULL);
+  g_assert(err == NULL || *err == NULL);
+
+  if (g_strcmp0(val, "no") == 0) {
+    ctx->extend_logs = FALSE;
+  } else if (g_strcmp0(val, "yes") == 0) {
+    ctx->extend_logs = TRUE;
+  } else {
+    SET_ERROR(err, -1, "Invalid values for \"extended logs\"");
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+static gboolean
 handle_param(app_context_t *ctx,
              const gchar *name,
              const gchar *value,
@@ -104,6 +123,11 @@ handle_param(app_context_t *ctx,
   } else if (g_strcmp0(name, "Port") == 0) {
     val = g_ascii_strtoll(value, NULL, 10);
     if (!handle_port(ctx, val, err)) {
+      g_prefix_error(err, "handle_port() failed: ");
+      return FALSE;
+    }
+  } else if (g_strcmp0(name, "ExtendLogs") == 0) {
+    if (!handle_extend_logs(ctx, value, err)) {
       g_prefix_error(err, "handle_port() failed: ");
       return FALSE;
     }
@@ -163,6 +187,11 @@ init_ua_parameters(app_context_t *ctx, const gchar *app_name, GError **err)
   }
 
   if (!setup_param(ctx, "Port", ctx->axparam, err)) {
+    g_prefix_error(err, "setup_param() failed: ");
+    return FALSE;
+  }
+
+  if (!setup_param(ctx, "ExtendLogs", ctx->axparam, err)) {
     g_prefix_error(err, "setup_param() failed: ");
     return FALSE;
   }

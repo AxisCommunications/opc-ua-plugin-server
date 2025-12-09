@@ -29,6 +29,7 @@
 #include "hello_world_plugin.h"
 #include "error.h"
 #include "log.h"
+#include "ua_utils.h"
 
 #define UA_PLUGIN_NAMESPACE "http://www.axis.com/OpcUA/HelloWorld/"
 #define UA_PLUGIN_NAME      "opc-hello-world-plugin"
@@ -48,6 +49,8 @@ typedef struct plugin {
   UA_UInt16 ns;
   /* an open62541 logger */
   UA_Logger *logger;
+  /* keep track of data that needs to be rolled back in case of failure */
+  rollback_data_t *rbd;
 } plugin_t;
 
 static plugin_t *plugin;
@@ -60,6 +63,8 @@ add_hello_world_node(UA_Server *server, GError **err)
   UA_String value = UA_STRING(UA_VALUE);
   UA_VariableAttributes attr = UA_VariableAttributes_default;
 
+  g_assert(plugin != NULL);
+  g_assert(plugin->rbd != NULL);
   g_assert(server != NULL);
   g_assert(err == NULL || *err == NULL);
 
@@ -69,7 +74,7 @@ add_hello_world_node(UA_Server *server, GError **err)
   attr.displayName = UA_LOCALIZEDTEXT("en-US", UA_DISPLAY_NAME);
   attr.description = UA_LOCALIZEDTEXT("en-US", UA_DESCRIPTION);
 
-  status = UA_Server_addVariableNode(
+  status = UA_Server_addVariableNode_rb(
           server,
           UA_NODEID_STRING(plugin->ns, UA_DISPLAY_NAME),
           UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER),
@@ -78,7 +83,9 @@ add_hello_world_node(UA_Server *server, GError **err)
           UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE),
           attr,
           NULL,
+          plugin->rbd,
           NULL);
+
   if (status != UA_STATUSCODE_GOOD) {
     SET_ERROR(err,
               -1,
@@ -97,7 +104,11 @@ plugin_cleanup(void)
 
   plugin->logger = NULL;
   g_clear_pointer(&plugin->name, g_free);
-  g_slice_free(plugin_t, plugin);
+
+  /* free up allocated rollback data, if any */
+  ua_utils_clear_rbd(&plugin->rbd);
+
+  g_clear_pointer(&plugin, g_free);
 }
 
 /* Exported functions */
@@ -107,6 +118,8 @@ opc_ua_create(UA_Server *server,
               G_GNUC_UNUSED gpointer *params,
               GError **err)
 {
+  GError *lerr = NULL;
+
   g_return_val_if_fail(server != NULL, FALSE);
   g_return_val_if_fail(logger != NULL, FALSE);
   g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
@@ -115,20 +128,36 @@ opc_ua_create(UA_Server *server,
     return TRUE;
   }
 
-  plugin = g_slice_new0(plugin_t);
+  plugin = g_new0(plugin_t, 1);
 
   plugin->name = g_strdup(UA_PLUGIN_NAME);
   plugin->logger = logger;
+  plugin->rbd = g_new0(rollback_data_t, 1);
 
   plugin->ns = UA_Server_addNamespace(server, UA_PLUGIN_NAMESPACE);
 
   if (!add_hello_world_node(server, err)) {
     g_prefix_error(err, "add_hello_world_node() failed: ");
-    plugin_cleanup();
-    return FALSE;
+    goto err_out;
   }
 
+  /* the information model was successfully populated so now we can free up our
+   * rollback data since we no longer need it */
+  ua_utils_clear_rbd(&plugin->rbd);
+
   return TRUE;
+
+err_out:
+  if (!ua_utils_do_rollback(server, plugin->rbd, &lerr)) {
+    LOG_E(plugin->logger,
+          "ua_utils_do_rollback() failed: %s",
+          GERROR_MSG(lerr));
+    g_clear_error(&lerr);
+  }
+
+  plugin_cleanup();
+
+  return FALSE;
 }
 
 void

@@ -3,8 +3,8 @@
 # The ARCH can be overridden by providing it a value in the command line
 # with the "--build-arg=XXX" argument fed to 'docker build'.
 ARG ARCH=aarch64
-ARG VERSION=1.14
-ARG UBUNTU_VERSION=22.04
+ARG VERSION=12.7.0
+ARG UBUNTU_VERSION=24.04
 ARG REPO=axisecp
 ARG SDK=acap-native-sdk
 ARG BUILD_DIR=/opt/app

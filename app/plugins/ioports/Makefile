@@ -7,7 +7,7 @@ SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
 DEPS = $(patsubst %.c,%.d,$(SRCS))
 
-PKGS = gio-2.0 glib-2.0 gmodule-2.0 jansson
+PKGS = gio-2.0 glib-2.0 gmodule-2.0 axevent jansson
 CFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags $(PKGS))
 LDLIBS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs $(PKGS))
 

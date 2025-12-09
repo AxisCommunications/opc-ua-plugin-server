@@ -4,10 +4,10 @@
 # OPC-UA Plugin Server ACAP application
 
 This repository contains the source code for building an OPC-UA Server ACAP application,
-along with a guide on developing and building custom modules/plugins. You can
-create your own plugins to address specific use cases. Two example plugins
-are provided and described below. Additional plugins will be published in
-the future designed to enhance production value.
+along with a guide on developing and building custom modules/plugins.
+You can create your own plugins to address specific use cases. Example
+plugins are provided and briefly described below, for more information about a
+plugin see its readme.
 
 The OPC-UA Server is based on the [**open62541**](https://www.open62541.org/)
 library. For an introduction to OPC-UA, see
@@ -26,6 +26,7 @@ library. For an introduction to OPC-UA, see
     - [Install](#install)
     - [Setup](#setup)
     - [Usage](#usage)
+        - [Available plugins](#available-plugins)
 - [Create your own plugin](#create-your-own-plugin)
 - [Limitations](#limitations)
     - [Security](#security)
@@ -256,16 +257,21 @@ options are not available.
 
 To connect to the server right click on the name and click **Connect** or click
 on the **Connect Server** icon in the tool bar. If the connection is
-established, the server will present its OPC-UA information as shown in the
+established, the server will present its OPC-UA information similar to the
 picture below.
 
 ![UAExpert](assets/UAExpert_InfoModel.png)
 
-There is one *object node* called **BasicDeviceInfo** with *property nodes*
-presenting different information about the active device. This is implemented in
-the **plugins/bdi** module. The **plugins/hello_world** module is responsible
-for creating a *variable node*, called **HelloWorldNode** with the string value
-"Hello World!".
+#### Available Plugins
+
+This application includes the source code for several plugins, which serve both as functional components and as examples for custom development. The currently available plugins are:
+
+- The `bdi` plugin (`plugins/bdi`) provides a **BasicDeviceInfo** object node with device-specific properties (See [readme](app/plugins/bdi/README.md) for details).
+- The `hello_world` plugin (`plugins/hello_world`) creates a **HelloWorldNode** variable (See [readme](app/plugins/hello_world/README.md) for details).
+- The `ioports` plugin (`plugins/ioports`) exposes I/O port status and control (See [readme](app/plugins/ioports/README.md) for details).
+- The `simple_event` plugin (`plugins/simple_event`) demonstrates Axis event integration via OPC-UA events (See [readme](app/plugins/simple_event/README.md) for details).
+- The `thermal` plugin (`plugins/thermal`) exposes thermal camera data and controls (See [readme](app/plugins/thermal/README.md) for details).
+- The `vinput` plugin (`plugins/vinput`) provides control over virtual inputs (See [readme](app/plugins/vinput/README.md) for details).
 
 ## Create your own plugin
 
@@ -276,13 +282,18 @@ GModule APIs.
 Create a new directory under *app/plugins/* and copy a Makefile from the example
 plugin. Each plugin will need its own Makefile.
 
+The directory structure looks like this,
+where **`your_plugin`** represents the new plugin you would create:
+
 ```text
 opc-ua-plugin-server
 ├── app
 │   ├── include
 │   │   ├── error.h
 │   │   ├── log.h
-│   │   └── plugin.h
+│   │   ├── plugin.h
+│   │   ├── ua_utils.h
+│   │   └── vapix_utils.h
 │   ├── LICENSE
 │   ├── Makefile
 │   ├── manifest.json
@@ -293,19 +304,54 @@ opc-ua-plugin-server
 │   ├── opcua_server.c
 │   ├── opcua_server.h
 │   ├── plugin.c
-│   └── plugins
-│       ├── bdi
-│       │   ├── bdi_plugin.c
-│       │   ├── bdi_plugin.h
-│       │   └── Makefile
-│       ├── hello_world
-│       │   ├── hello_world_plugin.c
-│       │   ├── hello_world_plugin.h
-│       │   └── Makefile
-│       └── your_plugin
-│           ├── your_plugin.c
-│           ├── your_plugin.h
-│           └── Makefile
+│   ├── plugins
+│   │   ├── bdi
+│   │   │   ├── bdi_plugin.c
+│   │   │   ├── bdi_plugin.h
+│   │   │   ├── Makefile
+│   │   │   └── README.md
+│   │   ├── hello_world
+│   │   │   ├── hello_world_plugin.c
+│   │   │   ├── hello_world_plugin.h
+│   │   │   ├── Makefile
+│   │   │   └── README.md
+│   │   ├── ioports
+│   │   │   ├── ioports_nodeids.h
+│   │   │   ├── ioports_ns.c
+│   │   │   ├── ioports_ns.h
+│   │   │   ├── ioports_plugin.c
+│   │   │   ├── ioports_plugin.h
+│   │   │   ├── ioports_types.c
+│   │   │   ├── ioports_types.h
+│   │   │   ├── ioports_vapix.c
+│   │   │   ├── ioports_vapix.h
+│   │   │   ├── Makefile
+│   │   │   └── README.md
+│   │   ├── simple_event
+│   │   │   ├── Makefile
+│   │   │   ├── README.md
+│   │   │   ├── simple_event_plugin.c
+│   │   │   └── simple_event_plugin.h
+│   │   ├── thermal
+│   │   │   ├── Makefile
+│   │   │   ├── README.md
+│   │   │   ├── thermal_plugin.c
+│   │   │   ├── thermal_plugin.h
+│   │   │   ├── thermal_vapix.c
+│   │   │   └── thermal_vapix.h
+│   │   ├── vinput
+│   │   │   ├── Makefile
+│   │   │   ├── README.md
+│   │   │   ├── vinput_plugin.c
+│   │   │   ├── vinput_plugin.h
+│   │   │   ├── vinput_vapix.c
+│   │   │   └── vinput_vapix.h
+│   │   └── your_plugin
+│   │       ├── Makefile
+│   │       ├── your_plugin.c
+│   │       └── your_plugin.h
+│   ├── ua_utils.c
+│   └── vapix_utils.c
 ├── assets
 ├── CODEOWNERS
 ├── CONTRIBUTING.md

@@ -116,7 +116,7 @@ plugin_load(const gchar *plugin_name, UA_Logger *logger, GError **err)
     return NULL;
   }
 
-  p = g_slice_new0(opc_plugin_t);
+  p = g_new0(opc_plugin_t, 1);
 
   p->module = module;
   p->filename = filename;
@@ -136,7 +136,7 @@ plugin_load(const gchar *plugin_name, UA_Logger *logger, GError **err)
 
     g_clear_pointer(&p->filename, g_free);
     p->module = NULL;
-    g_slice_free(opc_plugin_t, p);
+    g_clear_pointer(&p, g_free);
     return NULL;
   }
 
@@ -162,5 +162,5 @@ plugin_unload(opc_plugin_t *plugin, UA_Logger *logger)
   }
 
   g_clear_pointer(&plugin->filename, g_free);
-  g_slice_free(opc_plugin_t, plugin);
+  g_clear_pointer(&plugin, g_free);
 }
